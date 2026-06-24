@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConnectAZ — Görüntülü & Sesli & Yazışma</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: #2a2f42;
+    --accent: #5b6af0;
+    --accent2: #7c3aed;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #f0f2ff;
+    --muted: #6b7280;
+    --chat-me: #3b4de0;
+    --chat-other: #1e2230;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* AUTH SCREEN */
+  .auth-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+  .auth-logo {
+    font-size: 26px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+  .auth-tagline {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+  .auth-tabs {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+  }
+  .auth-tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .auth-tab.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  .auth-field {
+    margin-bottom: 14px;
+  }
+  .auth-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .auth-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .auth-input:focus { border-color: var(--accent); }
+  .auth-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: all 0.15s;
+  }
+  .auth-btn:hover { background: #6b7af8; transform: translateY(-1px); }
+  .auth-error {
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #fca5a5;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-size: 20px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .logout-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .logout-btn:hover { background: var(--border); color: var(--text); }
+
+  /* Main layout */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .sidebar-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .room-input-wrap {
+    display: flex;
+    gap: 6px;
+  }
+
+  .room-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .room-input:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-accent:hover { background: #6b7af8; transform: translateY(-1px); }
+
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: #f87171; }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { background: var(--border); }
+
+  .contacts-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 2px;
+    position: relative;
+  }
+
+  .contact-item:hover, .contact-item.active {
+    background: var(--surface2);
+  }
+
+  .unread-badge {
+    position: absolute;
+    right: 10px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    display: none;
+  }
+
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 15px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .avatar-online::after {
+    content: '';
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid var(--surface);
+  }
+
+  .contact-info { flex: 1; min-width: 0; }
+
+  .contact-name {
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .contact-status {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Video area */
+  .video-chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .video-section {
+    background: #080a0f;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    height: 300px;
+    transition: height 0.3s;
+  }
+
+  .video-section.expanded { height: 420px; }
+
+  .video-grid {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    width: 100%;
+    height: 100%;
+  }
+
+  .video-box {
+    flex: 1;
+    background: var(--surface);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .video-box video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .video-label {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .video-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .avatar-big {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .ctrl-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.15s;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .ctrl-btn:hover { transform: scale(1.08); background: var(--border); }
+  .ctrl-btn.active { background: var(--accent); border-color: var(--accent); }
+  .ctrl-btn.danger { background: var(--red); border-color: var(--red); }
+  .ctrl-btn.muted-state { background: #2d1f1f; border-color: var(--red); color: var(--red); }
+
+  .ctrl-btn-call {
+    width: 56px;
+    height: 56px;
+    font-size: 22px;
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .ctrl-btn-call:hover { background: #16a34a; }
+  .ctrl-btn-call.end { background: var(--red); border-color: var(--red); }
+  .ctrl-btn-call.end:hover { background: #b91c1c; }
+
+  /* Chat */
+  .chat-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .chat-title { font-size: 15px; font-weight: 600; }
+  .chat-sub { font-size: 12px; color: var(--muted); }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 75%;
+  }
+
+  .msg.me { align-self: flex-end; align-items: flex-end; }
+  .msg.other { align-self: flex-start; align-items: flex-start; }
+
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .msg.me .msg-bubble {
+    background: var(--chat-me);
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.other .msg-bubble {
+    background: var(--chat-other);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg-time {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+
+  .msg-sender {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+    padding: 0 4px;
+  }
+
+  .system-msg {
+    align-self: center;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 6px 14px;
+    border-radius: 100px;
+  }
+
+  /* Input */
+  .msg-input-area {
+    padding: 12px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .msg-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    resize: none;
+    max-height: 120px;
+    min-height: 42px;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+
+  .msg-input:focus { border-color: var(--accent); }
+  .msg-input::placeholder { color: var(--muted); }
+
+  .send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover { background: #6b7af8; transform: scale(1.05); }
+
+  /* Notification */
+  .notif {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 100;
+    display: none;
+    max-width: 280px;
+  }
+
+  .notif.show { display: block; animation: slideIn 0.3s ease; }
+
+  @keyframes slideIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .call-notif {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .call-notif-title { font-weight: 600; font-size: 15px; }
+  .call-notif-sub { color: var(--muted); font-size: 13px; }
+
+  .call-notif-btns { display: flex; gap: 8px; }
+
+  /* Typing indicator */
+  .typing {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 0 4px;
+  }
+
+  .typing.show { display: flex; }
+
+  .typing-dots {
+    display: flex;
+    gap: 3px;
+  }
+
+  .typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  /* Permission overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .overlay-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    max-width: 380px;
+    width: 90%;
+  }
+
+  .overlay-icon { font-size: 52px; margin-bottom: 16px; }
+  .overlay-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .overlay-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
+  .overlay-btns { display: flex; flex-direction: column; gap: 10px; }
+
+  /* Emoji bar */
+  .emoji-bar {
+    display: flex;
+    gap: 6px;
+    padding: 6px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .emoji-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 6px;
+    transition: background 0.1s;
+  }
+
+  .emoji-btn:hover { background: var(--surface2); }
+
+  /* Audio visualizer */
+  .audio-vis {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 24px;
+  }
+
+  .vis-bar {
+    width: 3px;
+    background: var(--green);
+    border-radius: 2px;
+    animation: vis 0.8s infinite alternate;
+  }
+
+  .vis-bar:nth-child(1) { animation-delay: 0s; height: 6px; }
+  .vis-bar:nth-child(2) { animation-delay: 0.1s; height: 14px; }
+  .vis-bar:nth-child(3) { animation-delay: 0.2s; height: 10px; }
+  .vis-bar:nth-child(4) { animation-delay: 0.3s; height: 18px; }
+  .vis-bar:nth-child(5) { animation-delay: 0.4s; height: 8px; }
+
+  @keyframes vis {
+    from { transform: scaleY(0.3); }
+    to { transform: scaleY(1); }
+  }
+
+  .audio-vis.paused .vis-bar { animation: none; height: 4px; background: var(--muted); }
+
+  /* Notif permission banner */
+  .notif-banner {
+    background: rgba(91,106,240,0.15);
+    border-bottom: 1px solid rgba(91,106,240,0.3);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .notif-banner button {
+    margin-left: auto;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .video-section { height: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">ConnectAZ</div>
+    <div class="auth-tagline">Görüntülü · Sesli · Yazışma platforması</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Giriş</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Qeydiyyat</button>
+    </div>
+
+    <div id="authError" class="auth-error"></div>
+
+    <!-- Login form -->
+    <div id="loginForm">
+      <div class="auth-field">
+        <label class="auth-label">İstifadəçi adı</label>
+        <input class="auth-input" id="loginUsername" type="text" placeholder="istifadəçi_adı" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">Parol</label>
+        <input class="auth-input" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="auth-btn" onclick="doLogin()">Daxil ol →</button>
+    </div>
+
+    <!-- Register form -->
+    <div id="registerForm" style="display:none;">
+      <div class="auth-field">
+        <label class="auth-label">Ad Soyad</label>
+        <input class="auth-input" id="regFullname" type="text" placeholder="Əli Əliyev">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">İstifadəçi adı</label>
+        <input class="auth-input" id="regUsername" type="text" placeholder="ali_eliyev">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">Parol</label>
+        <input class="auth-input" id="regPassword" type="password" placeholder="Minimum 6 simvol">
+      </div>
+      <button class="auth-btn" onclick="doRegister()">Qeydiyyatdan keç →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Permission Overlay -->
+<div class="overlay" id="overlay" style="display:none;">
+  <div class="overlay-card">
+    <div class="overlay-icon">🎥</div>
+    <div class="overlay-title">ConnectAZ-a xoş gəldiniz</div>
+    <div class="overlay-sub">Görüntülü zəng, sesli zəng və yazışma platforması. Kamera və mikrofona icazə verin.</div>
+    <div class="overlay-btns">
+      <button class="btn btn-accent" style="width:100%;justify-content:center;" onclick="requestPermissions()">
+        📸 Kamera & Mikrofon İcazəsi Ver
+      </button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="skipPermissions()">
+        💬 Yalnız Yazışma ilə Davam Et
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Incoming call notification -->
+<div class="notif" id="callNotif">
+  <div class="call-notif">
+    <div>
+      <div class="call-notif-title">📞 Gələn Zəng</div>
+      <div class="call-notif-sub" id="callerName">Nigar Həsənova zəng edir...</div>
+    </div>
+    <div class="call-notif-btns">
+      <button class="btn btn-accent" onclick="acceptCall()" style="flex:1;justify-content:center;">✅ Cavabla</button>
+      <button class="btn btn-danger" onclick="declineCall()" style="flex:1;justify-content:center;">❌ Rədd Et</button>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">ConnectAZ</div>
+  <div class="header-right">
+    <div class="header-status">
+      <div class="status-dot"></div>
+      <span id="myName">Siz • Onlayn</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Çıxış</button>
+  </div>
+</div>
+
+<!-- Notification permission banner -->
+<div class="notif-banner" id="notifBanner" style="display:none;">
+  🔔 Mesajlar üçün bildiriş almaq istəyirsiniz?
+  <button onclick="requestNotifPermission()">İcazə Ver</button>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Otaq / Ad</div>
+      <div class="room-input-wrap">
+        <input class="room-input" id="userNameInput" placeholder="Adınız..." readonly>
+      </div>
+      <div style="height:8px;"></div>
+      <div class="room-input-wrap">
+        <input class="room-input" id="roomInput" placeholder="Otaq ID...">
+        <button class="btn btn-accent" onclick="joinRoom()">Qoşul</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Kontaktlar</div>
+    </div>
+
+    <div class="contacts-list">
+      <div class="contact-item active" onclick="selectContact(this, 'Nigar', '#a78bfa')">
+        <div class="avatar avatar-online" style="background:linear-gradient(135deg,#a78bfa,#6366f1)">N</div>
+        <div class="contact-info">
+          <div class="contact-name">Nigar Həsənova</div>
+          <div class="contact-status">🟢 Onlayn</div>
+        </div>
+        <span class="unread-badge" id="badge-Nigar"></span>
+      </div>
+      <div class="contact-item" onclick="selectContact(this, 'Kamran', '#f59e0b')">
+        <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">K</div>
+        <div class="contact-info">
+          <div class="contact-name">Kamran Əliyev</div>
+          <div class="contact-status">🟡 Uzaqda</div>
+        </div>
+        <span class="unread-badge" id="badge-Kamran"></span>
+      </div>
+      <div class="contact-item" onclick="selectContact(this, 'Leyla', '#22c55e')">
+        <div class="avatar avatar-online" style="background:linear-gradient(135deg,#22c55e,#059669)">L</div>
+        <div class="contact-info">
+          <div class="contact-name">Leyla Məmmədova</div>
+          <div class="contact-status">🟢 Onlayn</div>
+        </div>
+        <span class="unread-badge" id="badge-Leyla"></span>
+      </div>
+      <div class="contact-item" onclick="selectContact(this, 'Rauf', '#5b6af0')">
+        <div class="avatar" style="background:linear-gradient(135deg,#5b6af0,#7c3aed)">R</div>
+        <div class="contact-info">
+          <div class="contact-name">Rauf Quliyev</div>
+          <div class="contact-status">🔴 Oflayn</div>
+        </div>
+        <span class="unread-badge" id="badge-Rauf"></span>
+      </div>
+      <div class="contact-item" onclick="selectContact(this, 'Aysel', '#ec4899')">
+        <div class="avatar avatar-online" style="background:linear-gradient(135deg,#ec4899,#a21caf)">A</div>
+        <div class="contact-info">
+          <div class="contact-name">Aysel Babayeva</div>
+          <div class="contact-status">🟢 Onlayn</div>
+        </div>
+        <span class="unread-badge" id="badge-Aysel"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video + Chat -->
+  <div class="video-chat-area">
+
+    <!-- Video -->
+    <div class="video-section" id="videoSection">
+      <div class="video-grid">
+        <div class="video-box" id="remoteVideoBox">
+          <div class="video-placeholder" id="remotePlaceholder">
+            <div class="avatar-big" id="remoteAvatar" style="background:linear-gradient(135deg,#a78bfa,#6366f1)">N</div>
+            <div id="remoteAvatarName">Nigar Həsənova</div>
+            <div style="font-size:12px;color:var(--muted)">Kamera bağlıdır</div>
+          </div>
+          <video id="remoteVideo" autoplay playsinline style="display:none;"></video>
+          <div class="video-label" id="remoteLabel">Nigar Həsənova</div>
+        </div>
+        <div class="video-box" style="max-width:160px;" id="localVideoBox">
+          <div class="video-placeholder" id="localPlaceholder">
+            <div class="avatar-big" style="background:linear-gradient(135deg,#5b6af0,#7c3aed)" id="myAvatarBig">Ə</div>
+            <div>Siz</div>
+          </div>
+          <video id="localVideo" autoplay playsinline muted style="display:none; transform: scaleX(-1);"></video>
+          <div class="video-label">Siz</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="ctrl-btn" id="micBtn" onclick="toggleMic()" title="Mikrofon">🎙️</button>
+      <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="Kamera">📷</button>
+      <button class="ctrl-btn ctrl-btn-call" id="callBtn" onclick="toggleCall()" title="Zəng et">📞</button>
+      <button class="ctrl-btn" id="screenBtn" onclick="toggleScreen()" title="Ekran paylaş">🖥️</button>
+      <div class="audio-vis paused" id="audioVis">
+        <div class="vis-bar"></div>
+        <div class="vis-bar"></div>
+        <div class="vis-bar"></div>
+        <div class="vis-bar"></div>
+        <div class="vis-bar"></div>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-section">
+      <div class="chat-header">
+        <div class="avatar" id="chatAvatar" style="background:linear-gradient(135deg,#a78bfa,#6366f1);width:34px;height:34px;font-size:14px;">N</div>
+        <div>
+          <div class="chat-title" id="chatTitle">Nigar Həsənova</div>
+          <div class="chat-sub">🟢 Onlayn • Son görünüş: İndi</div>
+        </div>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="system-msg">🔒 Söhbət başladı • Bu gün</div>
+      </div>
+
+      <div class="typing" id="typingIndicator">
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span id="typingName">Nigar yazır...</span>
+      </div>
+
+      <div class="emoji-bar">
+        <button class="emoji-btn" onclick="addEmoji('😊')">😊</button>
+        <button class="emoji-btn" onclick="addEmoji('👍')">👍</button>
+        <button class="emoji-btn" onclick="addEmoji('❤️')">❤️</button>
+        <button class="emoji-btn" onclick="addEmoji('😂')">😂</button>
+        <button class="emoji-btn" onclick="addEmoji('🎉')">🎉</button>
+        <button class="emoji-btn" onclick="addEmoji('🔥')">🔥</button>
+        <button class="emoji-btn" onclick="addEmoji('👏')">👏</button>
+        <button class="emoji-btn" onclick="addEmoji('🙏')">🙏</button>
+      </div>
+
+      <div class="msg-input-area">
+        <textarea class="msg-input" id="msgInput" placeholder="Mesaj yazın..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===================== SUPABASE CONFIG =====================
+// ⚠️  Öz Supabase URL və anon key-inizi buraya yazın:
+const SUPABASE_URL = 'https://izpdduqcdvntwyqbtjjv.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_IkVo-oB3yckHUJIZZKjivg_LUBGNj8G';
+
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ===================== DATABASE (Supabase) =====================
+const DB = {
+  // --- İstifadəçilər ---
+  async getUser(username) {
+    const { data, error } = await _supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+    if (error) return null;
+    return data;
+  },
+
+  async saveUser(user) {
+    const { error } = await _supabase
+      .from('users')
+      .upsert(user, { onConflict: 'username' });
+    if (error) throw error;
+  },
+
+  // --- Mesajlar ---
+  async getMessages(owner, contact) {
+    // Hər iki istiqamətdən mesajları gətir (owner↔contact)
+    const { data, error } = await _supabase
+      .from('messages')
+      .select('*')
+      .or(`and(owner.eq.${owner},contact.eq.${contact}),and(owner.eq.${contact},contact.eq.${owner})`)
+      .order('created_at', { ascending: true });
+    if (error) return [];
+    return data || [];
+  },
+
+  async addMessage(owner, contact, msg) {
+    const { error } = await _supabase
+      .from('messages')
+      .insert({ owner, contact, ...msg });
+    if (error) console.error('Mesaj saxlama xətası:', error);
+  },
+
+  // Real vaxtda yeni mesajları dinlə
+  subscribeMessages(owner, contact, callback) {
+    return _supabase
+      .channel(`msgs-${owner}-${contact}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `contact=eq.${owner}`
+      }, payload => {
+        callback(payload.new);
+      })
+      .subscribe();
+  },
+
+  // --- Sessiya (brauzer) ---
+  getCurrentUser() {
+    return JSON.parse(sessionStorage.getItem('connectaz_session') || 'null');
+  },
+  setCurrentUser(user) {
+    sessionStorage.setItem('connectaz_session', JSON.stringify(user));
+  },
+  clearSession() {
+    sessionStorage.removeItem('connectaz_session');
+  }
+};
+
+// ===================== AUTH =====================
+let currentUser = null;
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0 && tab==='login') || (i===1 && tab==='register'));
+  });
+  document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('authError').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+async function doRegister() {
+  const fullname = document.getElementById('regFullname').value.trim();
+  const username = document.getElementById('regUsername').value.trim().toLowerCase();
+  const password = document.getElementById('regPassword').value;
+
+  if (!fullname || !username || !password) return showAuthError('Bütün sahələri doldurun.');
+  if (password.length < 6) return showAuthError('Parol ən az 6 simvol olmalıdır.');
+  if (!/^[a-z0-9_]+$/.test(username)) return showAuthError('İstifadəçi adında yalnız hərf, rəqəm və _ işarəsi olmalıdır.');
+
+  const existing = await DB.getUser(username);
+  if (existing) return showAuthError('Bu istifadəçi adı artıq mövcuddur.');
+
+  await DB.saveUser({ fullname, username, password });
+  showAuthError('');
+  alert('Qeydiyyat uğurludur! İndi daxil olun.');
+  switchAuthTab('login');
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+
+  if (!username || !password) return showAuthError('İstifadəçi adı və parolu daxil edin.');
+
+  const user = await DB.getUser(username);
+  if (!user || user.password !== password) return showAuthError('İstifadəçi adı və ya parol yanlışdır.');
+
+  currentUser = user;
+  DB.setCurrentUser(user);
+  startApp();
+}
+
+function doLogout() {
+  DB.clearSession();
+  currentUser = null;
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
+}
+
+function startApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('userNameInput').value = currentUser.fullname;
+  document.getElementById('myName').textContent = currentUser.fullname + ' • Onlayn';
+  const letter = currentUser.fullname.charAt(0).toUpperCase();
+  document.getElementById('myAvatarBig').textContent = letter;
+
+  // Show overlay for cam/mic
+  document.getElementById('overlay').style.display = 'flex';
+
+  // Request notification permission automatically
+  requestNotifPermissionAuto();
+
+  // Start realtime subscription
+  subscribeToIncoming();
+
+  // Load messages for default contact
+  loadContactMessages('Nigar');
+}
+
+// ===================== NOTIFICATIONS =====================
+function requestNotifPermissionAuto() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    document.getElementById('notifBanner').style.display = 'none';
+    return;
+  }
+  if (Notification.permission === 'default') {
+    // Show banner for user to click (browsers require user gesture for permission)
+    document.getElementById('notifBanner').style.display = 'flex';
+  }
+}
+
+// ===================== APP LOGIC =====================
+let localStream = null;
+let isMicOn = true;
+let isCamOn = true;
+let isInCall = false;
+let isScreenSharing = false;
+let currentContact = { name: 'Nigar', color: '#a78bfa', letter: 'N' };
+let typingTimer = null;
+let autoMessageTimer = null;
+let unreadCounts = {};
+
+const CONTACT_FULLNAMES = {
+  Nigar: 'Nigar Həsənova',
+  Kamran: 'Kamran Əliyev',
+  Leyla: 'Leyla Məmmədova',
+  Rauf: 'Rauf Quliyev',
+  Aysel: 'Aysel Babayeva'
+};
+
+const AUTO_MESSAGES = [
+  "Haha, doğrudan? 😄",
+  "Yaxşı söhbət edir idik 😊",
+  "Bu çox maraqlıdır!",
+  "Razıyam sənin dediklərinlə 👍",
+  "Bir az sonra geri zəng edərəm",
+  "OK, başa düşdüm 🙏",
+  "Onda görüşərik! 🎉",
+  "Bəli, düz deyirsən",
+  "Görüntülü zəng edək? 📞"
+];
+
+async function loadContactMessages(contactName) {
+  if (!currentUser) return;
+  const msgs = await DB.getMessages(currentUser.username, contactName);
+  const container = document.getElementById('messages');
+  container.innerHTML = '<div class="system-msg">🔒 Söhbət başladı • Bu gün</div>';
+
+  msgs.forEach(m => {
+    const el = document.createElement('div');
+    if (m.type === 'system') {
+      el.className = 'system-msg';
+      el.textContent = m.text;
+    } else {
+      // Supabase-dən gələn mesajda "side" sütunu var
+      const side = m.side || (m.owner === currentUser.username ? 'me' : 'other');
+      el.className = 'msg ' + side;
+      if (side === 'other') {
+        el.innerHTML = `<div class="msg-sender">${m.sender || m.owner}</div><div class="msg-bubble">${m.text}</div><div class="msg-time">${m.time}</div>`;
+      } else {
+        el.innerHTML = `<div class="msg-bubble">${m.text}</div><div class="msg-time">${m.time}</div>`;
+      }
+    }
+    container.appendChild(el);
+  });
+  container.scrollTop = container.scrollHeight;
+
+  // Clear unread badge
+  unreadCounts[contactName] = 0;
+  updateBadge(contactName);
+}
+
+function updateBadge(name) {
+  const badge = document.getElementById('badge-' + name);
+  if (!badge) return;
+  const count = unreadCounts[name] || 0;
+  badge.textContent = count > 0 ? count : '';
+  badge.style.display = count > 0 ? 'inline' : 'none';
+}
+
+function requestPermissions() {
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    .then(stream => {
+      localStream = stream;
+      document.getElementById('localVideo').srcObject = stream;
+      document.getElementById('localVideo').style.display = 'block';
+      document.getElementById('localPlaceholder').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+      startAutoMessages();
+    })
+    .catch(() => skipPermissions());
+}
+
+function skipPermissions() {
+  document.getElementById('overlay').style.display = 'none';
+  startAutoMessages();
+}
+
+function toggleMic() {
+  isMicOn = !isMicOn;
+  const btn = document.getElementById('micBtn');
+  const vis = document.getElementById('audioVis');
+  if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = isMicOn);
+  btn.textContent = isMicOn ? '🎙️' : '🔇';
+  btn.className = 'ctrl-btn' + (isMicOn ? '' : ' muted-state');
+  vis.className = 'audio-vis' + (isMicOn && isInCall ? '' : ' paused');
+  addSystemMsg(isMicOn ? '🎙️ Mikrofon açıldı' : '🔇 Mikrofon söndürüldü');
+}
+
+function toggleCam() {
+  isCamOn = !isCamOn;
+  const btn = document.getElementById('camBtn');
+  if (localStream) localStream.getVideoTracks().forEach(t => t.enabled = isCamOn);
+  const vid = document.getElementById('localVideo');
+  const ph = document.getElementById('localPlaceholder');
+  if (localStream) {
+    vid.style.display = isCamOn ? 'block' : 'none';
+    ph.style.display = isCamOn ? 'none' : 'flex';
+  }
+  btn.textContent = isCamOn ? '📷' : '🚫';
+  btn.className = 'ctrl-btn' + (isCamOn ? '' : ' muted-state');
+  addSystemMsg(isCamOn ? '📷 Kamera açıldı' : '🚫 Kamera söndürüldü');
+}
+
+function toggleCall() {
+  isInCall = !isInCall;
+  const btn = document.getElementById('callBtn');
+  const vis = document.getElementById('audioVis');
+  if (isInCall) {
+    btn.textContent = '📵';
+    btn.className = 'ctrl-btn ctrl-btn-call end';
+    vis.className = 'audio-vis';
+    addSystemMsg(`📞 ${currentContact.name} ilə zəng başladı`);
+  } else {
+    btn.textContent = '📞';
+    btn.className = 'ctrl-btn ctrl-btn-call';
+    vis.className = 'audio-vis paused';
+    addSystemMsg('📵 Zəng bitdi');
+  }
+}
+
+function toggleScreen() {
+  isScreenSharing = !isScreenSharing;
+  const btn = document.getElementById('screenBtn');
+  if (isScreenSharing && navigator.mediaDevices.getDisplayMedia) {
+    navigator.mediaDevices.getDisplayMedia({ video: true })
+      .then(stream => {
+        document.getElementById('localVideo').srcObject = stream;
+        document.getElementById('localVideo').style.display = 'block';
+        document.getElementById('localPlaceholder').style.display = 'none';
+        btn.className = 'ctrl-btn active';
+        addSystemMsg('🖥️ Ekran paylaşımı başladı');
+      })
+      .catch(() => { isScreenSharing = false; });
+  } else {
+    if (localStream) document.getElementById('localVideo').srcObject = localStream;
+    btn.className = 'ctrl-btn';
+    addSystemMsg('🖥️ Ekran paylaşımı dayandırıldı');
+  }
+}
+
+async function addSystemMsg(text) {
+  const el = document.createElement('div');
+  el.className = 'system-msg';
+  el.textContent = text;
+  const msgs = document.getElementById('messages');
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  if (currentUser) {
+    await DB.addMessage(currentUser.username, currentContact.name, { type: 'system', text });
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  const msgData = { side: 'me', text: escapeHtml(text), time };
+
+  const msg = document.createElement('div');
+  msg.className = 'msg me';
+  msg.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div><div class="msg-time">${time}</div>`;
+
+  const msgs = document.getElementById('messages');
+  msgs.appendChild(msg);
+  msgs.scrollTop = msgs.scrollHeight;
+  input.value = '';
+  input.style.height = 'auto';
+
+  // Save to DB
+  if (currentUser) await DB.addMessage(currentUser.username, currentContact.name, msgData);
+
+  // Simulate response
+  clearTimeout(autoMessageTimer);
+  showTyping();
+  autoMessageTimer = setTimeout(() => {
+    hideTyping();
+    receiveAutoMessage();
+  }, 1500 + Math.random() * 1500);
+}
+
+async function receiveAutoMessage() {
+  const text = AUTO_MESSAGES[Math.floor(Math.random() * AUTO_MESSAGES.length)];
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  const msgData = { side: 'other', sender: currentContact.name, text, time };
+
+  const msg = document.createElement('div');
+  msg.className = 'msg other';
+  msg.innerHTML = `<div class="msg-sender">${currentContact.name}</div><div class="msg-bubble">${text}</div><div class="msg-time">${time}</div>`;
+
+  const msgs = document.getElementById('messages');
+  msgs.appendChild(msg);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Save to DB
+  if (currentUser) await DB.addMessage(currentUser.username, currentContact.name, msgData);
+
+  // Browser notification if tab hidden
+  sendBrowserNotif(currentContact.name, text);
+}
+
+function sendBrowserNotif(sender, text) {
+  if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+    const notif = new Notification('ConnectAZ — ' + CONTACT_FULLNAMES[sender] || sender, {
+      body: text,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="%235b6af0"/><text x="32" y="42" font-size="28" text-anchor="middle" fill="white">C</text></svg>',
+      badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="%235b6af0"/></svg>',
+      tag: 'connectaz-msg-' + sender,
+      renotify: true
+    });
+    notif.onclick = () => { window.focus(); notif.close(); };
+    setTimeout(() => notif.close(), 5000);
+  }
+}
+
+function requestNotifPermission() {
+  Notification.requestPermission().then(perm => {
+    document.getElementById('notifBanner').style.display = 'none';
+    if (perm === 'granted') {
+      addSystemMsg('🔔 Bildirişlər aktivləşdirildi');
+    }
+  });
+}
+
+function showTyping() {
+  document.getElementById('typingName').textContent = currentContact.name + ' yazır...';
+  document.getElementById('typingIndicator').className = 'typing show';
+}
+
+function hideTyping() {
+  document.getElementById('typingIndicator').className = 'typing';
+}
+
+function startAutoMessages() {
+  setTimeout(showIncomingCall, 3000);
+}
+
+function showIncomingCall() {
+  document.getElementById('callerName').textContent = currentContact.name + ' zəng edir...';
+  document.getElementById('callNotif').className = 'notif show';
+
+  // Also send browser notif for call
+  if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+    const n = new Notification('ConnectAZ — Gələn Zəng', {
+      body: (CONTACT_FULLNAMES[currentContact.name] || currentContact.name) + ' sizi zəng edir',
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="%2322c55e"/><text x="32" y="42" font-size="28" text-anchor="middle" fill="white">📞</text></svg>',
+      requireInteraction: true
+    });
+    n.onclick = () => { window.focus(); acceptCall(); n.close(); };
+  }
+}
+
+function acceptCall() {
+  document.getElementById('callNotif').className = 'notif';
+  if (!isInCall) toggleCall();
+}
+
+function declineCall() {
+  document.getElementById('callNotif').className = 'notif';
+  addSystemMsg('📵 Zəng rədd edildi');
+}
+
+function selectContact(el, name, color) {
+  document.querySelectorAll('.contact-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+
+  const fullname = CONTACT_FULLNAMES[name] || name;
+  const letter = name.charAt(0).toUpperCase();
+  currentContact = { name, color, letter };
+
+  document.getElementById('chatTitle').textContent = fullname;
+  document.getElementById('remoteLabel').textContent = fullname;
+  document.getElementById('remoteAvatarName').textContent = fullname;
+  document.getElementById('remoteAvatar').textContent = letter;
+  document.getElementById('remoteAvatar').style.background = `linear-gradient(135deg, ${color}, #6366f1)`;
+  document.getElementById('chatAvatar').textContent = letter;
+  document.getElementById('chatAvatar').style.background = `linear-gradient(135deg, ${color}, #6366f1)`;
+  document.getElementById('typingName').textContent = name + ' yazır...';
+
+  loadContactMessages(name);
+  addSystemMsg(`💬 ${fullname} ilə söhbət`);
+}
+
+function joinRoom() {
+  const room = document.getElementById('roomInput').value.trim();
+  if (room) {
+    addSystemMsg(`🚪 "${room}" otağına qoşuldunuz`);
+  }
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function addEmoji(emoji) {
+  const input = document.getElementById('msgInput');
+  input.value += emoji;
+  input.focus();
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===================== INIT =====================
+let realtimeChannel = null;
+
+window.addEventListener('load', async () => {
+  // Check if already logged in
+  const savedUser = DB.getCurrentUser();
+  if (savedUser) {
+    currentUser = savedUser;
+    startApp();
+  }
+
+  // Enter key support for auth inputs
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('regPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doRegister();
+  });
+});
+
+function subscribeToIncoming() {
+  if (realtimeChannel) realtimeChannel.unsubscribe();
+  realtimeChannel = DB.subscribeMessages(currentUser.username, currentContact.name, (msg) => {
+    // Yalnız "other" tərəfdən gələn mesajları göstər (avtomatik cavablar deyil)
+    if (msg.side === 'other' && msg.owner !== currentUser.username) {
+      const el = document.createElement('div');
+      el.className = 'msg other';
+      el.innerHTML = `<div class="msg-sender">${msg.sender || msg.owner}</div><div class="msg-bubble">${msg.text}</div><div class="msg-time">${msg.time}</div>`;
+      const container = document.getElementById('messages');
+      container.appendChild(el);
+      container.scrollTop = container.scrollHeight;
+      sendBrowserNotif(msg.owner, msg.text);
+    }
+  });
+}
+</script>
+</body>
+</html>
