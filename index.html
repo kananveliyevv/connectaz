@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConnectAZ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg:       #1a1d23;
+  --sidebar-bg: #111317;
+  --server-bg: #0d0f13;
+  --surface:  #202329;
+  --surface2: #282c34;
+  --border:   #2e333d;
+  --accent:   #5865f2;
+  --accent-h: #4752c4;
+  --green:    #23a55a;
+  --red:      #ed4245;
+  --yellow:   #f0b232;
+  --text:     #dbdee1;
+  --text-dim: #949ba4;
+  --text-muted:#6d7380;
+  --chat-me:  #5865f2;
+  --mention:  rgba(88,101,242,0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
+
+/* ===== AUTH ===== */
+.auth-wrap {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 36px 40px;
+  width: 100%; max-width: 400px;
+  box-shadow: 0 32px 72px rgba(0,0,0,0.6);
+}
+.auth-logo {
+  font-size: 24px; font-weight: 800;
+  color: #fff; text-align: center;
+  margin-bottom: 4px; letter-spacing: -0.5px;
+}
+.auth-logo span { color: var(--accent); }
+.auth-sub { text-align:center; color:var(--text-dim); font-size:13px; margin-bottom:28px; }
+.auth-tabs {
+  display:flex; background:var(--surface2);
+  border-radius:8px; padding:3px; margin-bottom:22px;
+}
+.auth-tab {
+  flex:1; padding:8px; border:none; background:transparent;
+  color:var(--text-muted); border-radius:6px; cursor:pointer;
+  font-size:13px; font-weight:500; transition:.2s;
+}
+.auth-tab.active { background:var(--accent); color:#fff; }
+.f-label { font-size:11px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; display:block; }
+.f-input {
+  width:100%; background:var(--server-bg); border:1px solid var(--border);
+  border-radius:8px; padding:10px 14px; color:var(--text);
+  font-size:14px; outline:none; transition:.2s; margin-bottom:14px;
+  font-family:'Inter',sans-serif;
+}
+.f-input:focus { border-color:var(--accent); }
+.auth-btn {
+  width:100%; padding:12px; border-radius:8px; border:none;
+  background:var(--accent); color:#fff; font-size:15px;
+  font-weight:700; cursor:pointer; transition:.15s; margin-top:4px;
+}
+.auth-btn:hover { background:var(--accent-h); }
+.auth-err {
+  background:rgba(237,66,69,.12); border:1px solid rgba(237,66,69,.3);
+  color:#f9a8aa; padding:10px 14px; border-radius:8px;
+  font-size:13px; margin-bottom:14px; display:none;
+}
+
+/* ===== SERVER ICON BAR (left) ===== */
+.server-bar {
+  width:72px; background:var(--server-bg);
+  display:flex; flex-direction:column; align-items:center;
+  padding:12px 0; gap:8px; flex-shrink:0;
+  border-right:1px solid rgba(255,255,255,0.04);
+  overflow-y:auto;
+}
+.server-icon {
+  width:48px; height:48px; border-radius:24px;
+  background:var(--surface); display:flex;
+  align-items:center; justify-content:center;
+  font-size:20px; cursor:pointer; transition:.2s;
+  position:relative; flex-shrink:0;
+}
+.server-icon:hover { border-radius:16px; background:var(--accent); }
+.server-icon.active { border-radius:16px; background:var(--accent); }
+.server-icon::before {
+  content:''; position:absolute; left:-12px; width:4px;
+  height:0; background:#fff; border-radius:0 4px 4px 0;
+  transition:.2s; top:50%; transform:translateY(-50%);
+}
+.server-icon.active::before { height:40px; }
+.server-sep {
+  width:32px; height:2px; background:var(--border); border-radius:1px; flex-shrink:0;
+}
+.add-server {
+  width:48px; height:48px; border-radius:24px;
+  background:var(--surface); display:flex;
+  align-items:center; justify-content:center;
+  font-size:24px; cursor:pointer; transition:.2s;
+  color:var(--green); border:none; flex-shrink:0;
+}
+.add-server:hover { border-radius:16px; background:var(--green); color:#fff; }
+
+/* ===== CHANNEL SIDEBAR ===== */
+.chan-sidebar {
+  width:240px; background:var(--sidebar-bg);
+  display:flex; flex-direction:column; flex-shrink:0;
+}
+.server-header {
+  padding:16px 16px 12px;
+  border-bottom:1px solid var(--border);
+  font-weight:700; font-size:15px;
+  display:flex; align-items:center; justify-content:space-between;
+  cursor:default;
+}
+.server-header svg { color:var(--text-dim); cursor:pointer; }
+.server-header svg:hover { color:var(--text); }
+
+.chan-list { flex:1; overflow-y:auto; padding:8px 8px; }
+.chan-cat {
+  font-size:11px; font-weight:700; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:.7px;
+  padding:16px 8px 4px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.chan-cat-add {
+  background:none; border:none; color:var(--text-muted);
+  cursor:pointer; font-size:16px; padding:0;
+  line-height:1;
+}
+.chan-cat-add:hover { color:var(--text); }
+.chan-item {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-radius:6px; cursor:pointer;
+  color:var(--text-muted); font-size:14px; font-weight:500;
+  transition:.1s; margin-bottom:1px; position:relative;
+}
+.chan-item:hover { background:var(--surface2); color:var(--text); }
+.chan-item.active { background:var(--surface2); color:var(--text); }
+.chan-item .chan-icon { font-size:16px; flex-shrink:0; }
+.chan-item .chan-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.chan-item .chan-badge {
+  background:var(--red); color:#fff; border-radius:10px;
+  font-size:11px; font-weight:700; padding:1px 6px; min-width:18px; text-align:center;
+}
+.chan-item .chan-actions {
+  display:none; gap:4px;
+}
+.chan-item:hover .chan-actions { display:flex; }
+.chan-action-btn {
+  background:none; border:none; color:var(--text-dim);
+  cursor:pointer; font-size:13px; padding:2px 4px; border-radius:4px;
+}
+.chan-action-btn:hover { background:var(--border); color:var(--text); }
+
+/* User info bottom */
+.user-panel {
+  background:rgba(0,0,0,0.2);
+  padding:10px 12px;
+  display:flex; align-items:center; gap:10px;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.user-panel .up-avatar {
+  width:32px; height:32px; border-radius:50%;
+  background:var(--accent); display:flex;
+  align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; flex-shrink:0; position:relative;
+}
+.up-avatar::after {
+  content:''; position:absolute; bottom:0; right:0;
+  width:10px; height:10px; background:var(--green);
+  border-radius:50%; border:2px solid var(--sidebar-bg);
+}
+.up-name { flex:1; }
+.up-name .up-n { font-size:13px; font-weight:600; }
+.up-name .up-tag { font-size:11px; color:var(--text-muted); }
+.up-btns { display:flex; gap:4px; }
+.up-btn {
+  width:28px; height:28px; border-radius:6px;
+  background:none; border:none; color:var(--text-dim);
+  cursor:pointer; display:flex; align-items:center;
+  justify-content:center; font-size:14px; transition:.1s;
+}
+.up-btn:hover { background:var(--surface2); color:var(--text); }
+
+/* ===== MAIN CHAT ===== */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+.chat-header {
+  height:48px; background:var(--sidebar-bg);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 16px;
+  gap:12px; flex-shrink:0; z-index:10;
+  box-shadow:0 1px 4px rgba(0,0,0,0.3);
+}
+.chat-header .ch-icon { font-size:18px; color:var(--text-muted); }
+.chat-header .ch-name { font-weight:700; font-size:15px; }
+.chat-header .ch-sep { width:1px; height:20px; background:var(--border); }
+.chat-header .ch-topic { font-size:13px; color:var(--text-dim); }
+.chat-header .ch-actions { margin-left:auto; display:flex; gap:8px; }
+.ch-btn {
+  background:none; border:none; color:var(--text-muted);
+  cursor:pointer; font-size:18px; padding:4px;
+  border-radius:6px; transition:.1s;
+}
+.ch-btn:hover { background:var(--surface2); color:var(--text); }
+
+/* Messages */
+.messages-area { flex:1; overflow-y:auto; padding:24px 16px 8px; }
+.messages-area::-webkit-scrollbar { width:4px; }
+.messages-area::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+.sys-msg {
+  text-align:center; color:var(--text-muted); font-size:12px;
+  margin:12px 0; display:flex; align-items:center; gap:8px;
+}
+.sys-msg::before, .sys-msg::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+
+.msg-group { display:flex; gap:16px; margin-bottom:16px; }
+.msg-group:hover { background:rgba(0,0,0,0.06); margin:0 -16px 16px; padding:4px 16px; border-radius:4px; }
+.msg-avatar {
+  width:40px; height:40px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:700; flex-shrink:0; margin-top:2px;
+}
+.msg-body { flex:1; }
+.msg-header { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+.msg-author { font-weight:600; font-size:14px; }
+.msg-time { font-size:11px; color:var(--text-muted); }
+.msg-text { font-size:14px; line-height:1.55; color:var(--text); word-break:break-word; }
+
+.msg-cont { font-size:14px; line-height:1.55; color:var(--text); word-break:break-word; margin-left:56px; margin-bottom:2px; }
+
+/* Input */
+.input-area {
+  padding:0 16px 24px; flex-shrink:0;
+}
+.input-box {
+  background:var(--surface2);
+  border-radius:12px;
+  display:flex; align-items:flex-end; gap:0;
+  padding:0 16px;
+}
+.input-box textarea {
+  flex:1; background:transparent; border:none;
+  color:var(--text); font-size:15px; outline:none;
+  resize:none; padding:14px 0; min-height:48px;
+  max-height:120px; font-family:'Inter',sans-serif;
+  line-height:1.5;
+}
+.input-box textarea::placeholder { color:var(--text-muted); }
+.input-actions { display:flex; align-items:center; gap:6px; padding:12px 0; }
+.inp-btn {
+  background:none; border:none; color:var(--text-muted);
+  cursor:pointer; font-size:20px; padding:4px;
+  border-radius:6px; transition:.1s; line-height:1;
+}
+.inp-btn:hover { color:var(--text); }
+.send-btn {
+  background:var(--accent); border:none; color:#fff;
+  width:32px; height:32px; border-radius:8px;
+  cursor:pointer; font-size:14px; display:flex;
+  align-items:center; justify-content:center; transition:.15s;
+}
+.send-btn:hover { background:var(--accent-h); }
+
+/* Typing */
+.typing-row {
+  height:24px; padding:0 16px 6px;
+  font-size:12px; color:var(--text-muted);
+  display:flex; align-items:center; gap:6px;
+  flex-shrink:0;
+}
+.typing-dots { display:flex; gap:2px; }
+.typing-dots span {
+  width:4px; height:4px; background:var(--text-muted);
+  border-radius:50%; animation:td .8s infinite alternate;
+}
+.typing-dots span:nth-child(2) { animation-delay:.15s; }
+.typing-dots span:nth-child(3) { animation-delay:.3s; }
+@keyframes td { from{transform:scaleY(0.4);opacity:.4} to{transform:scaleY(1);opacity:1} }
+
+/* Members panel */
+.members-panel {
+  width:240px; background:var(--sidebar-bg);
+  border-left:1px solid var(--border);
+  display:flex; flex-direction:column; flex-shrink:0;
+  overflow-y:auto; padding:16px 8px;
+  transition:.3s;
+}
+.members-panel.hidden { width:0; padding:0; overflow:hidden; }
+.mem-cat { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.7px; padding:8px 10px 4px; }
+.mem-item {
+  display:flex; align-items:center; gap:10px;
+  padding:6px 10px; border-radius:6px; cursor:pointer; transition:.1s;
+}
+.mem-item:hover { background:var(--surface2); }
+.mem-av {
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; flex-shrink:0; position:relative;
+}
+.mem-av .dot {
+  position:absolute; bottom:0; right:0;
+  width:10px; height:10px; border-radius:50%;
+  border:2px solid var(--sidebar-bg);
+}
+.mem-name { font-size:14px; font-weight:500; }
+.mem-status { font-size:11px; color:var(--text-muted); }
+
+/* ===== QR MODAL ===== */
+.modal-bg {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  z-index:800; display:flex; align-items:center; justify-content:center;
+  display:none;
+}
+.modal-bg.open { display:flex; }
+.modal {
+  background:var(--surface);
+  border-radius:16px; padding:32px;
+  width:100%; max-width:420px;
+  box-shadow:0 32px 72px rgba(0,0,0,0.7);
+  position:relative;
+}
+.modal-close {
+  position:absolute; top:12px; right:14px;
+  background:none; border:none; color:var(--text-dim);
+  font-size:20px; cursor:pointer;
+}
+.modal-close:hover { color:var(--text); }
+.modal h2 { font-size:20px; font-weight:800; margin-bottom:6px; }
+.modal p { color:var(--text-dim); font-size:13px; margin-bottom:20px; }
+.qr-box {
+  background:#fff; border-radius:12px;
+  padding:16px; display:flex; align-items:center;
+  justify-content:center; margin-bottom:20px;
+}
+.invite-link-box {
+  background:var(--server-bg); border:1px solid var(--border);
+  border-radius:8px; padding:10px 14px;
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:16px;
+}
+.invite-link-box span { flex:1; font-size:13px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.copy-btn {
+  background:var(--accent); border:none; color:#fff;
+  padding:6px 14px; border-radius:6px; cursor:pointer;
+  font-size:13px; font-weight:600; white-space:nowrap;
+}
+.copy-btn:hover { background:var(--accent-h); }
+.modal-meta { font-size:12px; color:var(--text-muted); text-align:center; }
+
+/* Create channel modal */
+.create-modal { max-width:380px; }
+.chan-types { display:flex; gap:8px; margin-bottom:20px; }
+.chan-type-btn {
+  flex:1; padding:14px 10px; border-radius:10px;
+  background:var(--surface2); border:2px solid transparent;
+  cursor:pointer; text-align:center; transition:.15s;
+}
+.chan-type-btn.selected { border-color:var(--accent); background:var(--mention); }
+.chan-type-btn .ct-icon { font-size:24px; margin-bottom:6px; }
+.chan-type-btn .ct-label { font-size:13px; font-weight:600; color:var(--text); }
+.chan-type-btn .ct-sub { font-size:11px; color:var(--text-muted); }
+.modal-btns { display:flex; gap:8px; margin-top:20px; }
+.modal-btn {
+  flex:1; padding:10px; border-radius:8px; border:none;
+  cursor:pointer; font-size:14px; font-weight:600; transition:.15s;
+}
+.modal-btn.cancel { background:var(--surface2); color:var(--text); }
+.modal-btn.cancel:hover { background:var(--border); }
+.modal-btn.create { background:var(--accent); color:#fff; }
+.modal-btn.create:hover { background:var(--accent-h); }
+
+/* Channel welcome */
+.chan-welcome { padding:32px 16px 24px; }
+.chan-welcome-icon { font-size:56px; margin-bottom:16px; }
+.chan-welcome h1 { font-size:28px; font-weight:800; margin-bottom:8px; }
+.chan-welcome p { color:var(--text-dim); font-size:15px; }
+
+/* Scrollbar */
+.chan-list::-webkit-scrollbar { width:3px; }
+.chan-list::-webkit-scrollbar-thumb { background:var(--border); }
+.members-panel::-webkit-scrollbar { width:3px; }
+.members-panel::-webkit-scrollbar-thumb { background:var(--border); }
+
+/* Empty state */
+.empty-server {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:12px;
+  color:var(--text-muted); text-align:center; padding:40px;
+}
+.empty-server h2 { color:var(--text); font-size:22px; font-weight:700; margin-bottom:4px; }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); padding:12px 20px; border-radius:10px;
+  font-size:14px; font-weight:500; z-index:9999;
+  transform:translateY(60px); opacity:0;
+  transition:.25s; pointer-events:none;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+@media(max-width:768px){
+  .server-bar { width:60px; }
+  .chan-sidebar { width:200px; }
+  .members-panel { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-card">
+    <div class="auth-logo">Connect<span>AZ</span></div>
+    <div class="auth-sub">Yazışma · Kanallar · Real-time</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Giriş</button>
+      <button class="auth-tab" onclick="switchTab('register')">Qeydiyyat</button>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+    <div id="loginForm">
+      <label class="f-label">İstifadəçi adı</label>
+      <input class="f-input" id="lUser" placeholder="istifadeci_adi" autocomplete="username">
+      <label class="f-label">Parol</label>
+      <input class="f-input" id="lPass" type="password" placeholder="••••••••" autocomplete="current-password">
+      <button class="auth-btn" onclick="doLogin()">Daxil ol →</button>
+    </div>
+    <div id="regForm" style="display:none;">
+      <label class="f-label">Ad Soyad</label>
+      <input class="f-input" id="rName" placeholder="Əli Əliyev">
+      <label class="f-label">İstifadəçi adı</label>
+      <input class="f-input" id="rUser" placeholder="ali_eliyev">
+      <label class="f-label">Parol</label>
+      <input class="f-input" id="rPass" type="password" placeholder="Minimum 6 simvol">
+      <button class="auth-btn" onclick="doRegister()">Qeydiyyatdan keç →</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR / Invite Modal -->
+<div class="modal-bg" id="qrModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('qrModal')">✕</button>
+    <h2>Kanala Dəvət Et</h2>
+    <p id="qrModalDesc">Bu QR kodu paylaşaraq dostlarınızı kanala dəvət edin.</p>
+    <div class="qr-box"><div id="qrCanvas"></div></div>
+    <div class="invite-link-box">
+      <span id="inviteLink">connectaz.app/invite/...</span>
+      <button class="copy-btn" onclick="copyInvite()">Kopyala</button>
+    </div>
+    <div class="modal-meta">🔒 Dəvət linki 7 gün etibarlıdır · 100 istifadə</div>
+  </div>
+</div>
+
+<!-- Create Channel Modal -->
+<div class="modal-bg" id="createModal">
+  <div class="modal create-modal">
+    <button class="modal-close" onclick="closeModal('createModal')">✕</button>
+    <h2>Kanal Yarat</h2>
+    <p>Kanal növü seçin</p>
+    <div class="chan-types">
+      <div class="chan-type-btn selected" id="typeText" onclick="selectChanType('text')">
+        <div class="ct-icon">#</div>
+        <div class="ct-label">Mətn</div>
+        <div class="ct-sub">Yazışma</div>
+      </div>
+      <div class="chan-type-btn" id="typeVoice" onclick="selectChanType('voice')">
+        <div class="ct-icon">🔊</div>
+        <div class="ct-label">Səsli</div>
+        <div class="ct-sub">Danışıq</div>
+      </div>
+    </div>
+    <label class="f-label">Kanal adı</label>
+    <input class="f-input" id="newChanName" placeholder="metn-kanali">
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal('createModal')">İmtina</button>
+      <button class="modal-btn create" onclick="createChannel()">Yarat</button>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none; flex:1; display:none; flex-direction:row; width:100%; height:100vh; overflow:hidden;">
+
+  <!-- Server bar -->
+  <div class="server-bar" id="serverBar">
+    <div class="server-icon active" id="serverIconHome" onclick="selectServer('home')" title="Ana Ekran">🏠</div>
+    <div class="server-sep"></div>
+    <div id="serverIcons"></div>
+    <div class="server-sep"></div>
+    <button class="add-server" onclick="showAddServer()" title="Server Yarat / Qoşul">+</button>
+  </div>
+
+  <!-- Channel sidebar -->
+  <div class="chan-sidebar">
+    <div class="server-header" id="serverHeader">
+      <span id="serverName">ConnectAZ</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" onclick="showServerMenu()"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="chan-list" id="chanList"></div>
+    <div class="user-panel">
+      <div class="up-avatar" id="myAv">?</div>
+      <div class="up-name">
+        <div class="up-n" id="myName">İstifadəçi</div>
+        <div class="up-tag" id="myTag">#0000</div>
+      </div>
+      <div class="up-btns">
+        <button class="up-btn" title="Çıxış" onclick="doLogout()">🚪</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main" id="mainArea">
+    <div class="empty-server" id="emptyState">
+      <div style="font-size:64px;">💬</div>
+      <div>
+        <h2>Xoş gəldiniz!</h2>
+        <p>Sol tərəfdən bir kanal seçin.</p>
+      </div>
+    </div>
+
+    <!-- Chat view -->
+    <div id="chatView" style="display:none; flex:1; flex-direction:column; overflow:hidden; display:none;">
+      <div class="chat-header">
+        <span class="ch-icon" id="chIcon">#</span>
+        <span class="ch-name" id="chName">kanal</span>
+        <div class="ch-sep"></div>
+        <span class="ch-topic" id="chTopic">Kanal mövzusu yoxdur</span>
+        <div class="ch-actions">
+          <button class="ch-btn" title="QR Dəvət" onclick="showQR()">📲</button>
+          <button class="ch-btn" title="Üzvlər" onclick="toggleMembers()">👥</button>
+        </div>
+      </div>
+      <div class="messages-area" id="messagesArea"></div>
+      <div class="typing-row" id="typingRow" style="visibility:hidden;">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+        <span id="typingText"></span>
+      </div>
+      <div class="input-area">
+        <div class="input-box">
+          <textarea id="msgInput" placeholder="Mesaj yazın..." rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this);handleTyping()"></textarea>
+          <div class="input-actions">
+            <button class="inp-btn" onclick="addEmoji('😊')">😊</button>
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Members panel -->
+  <div class="members-panel" id="membersPanel"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== SUPABASE =====
+const SUPABASE_URL  = 'https://izpdduqcdvntwyqbtjjv.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6cGRkdXFjZHZudHd5cWJ0amp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMjM2NjcsImV4cCI6MjA5Nzg5OTY2N30.Y9h_nM7B1BfxmVXap2oR1f1Bn6IomXhGai0KnAOTbns';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ===== STATE =====
+let currentUser  = null;
+let currentServer = null; // { id, name, owner }
+let currentChan   = null; // { id, name, type }
+let servers       = [];
+let channels      = [];
+let members       = [];
+let msgSub        = null;
+let typingTimer   = null;
+let newChanType   = 'text';
+
+// ===== UTILS =====
+function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function fmtTime(ts){
+  const d=new Date(ts);
+  return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+function fmtDate(ts){
+  const d=new Date(ts);
+  const today=new Date();
+  if(d.toDateString()===today.toDateString()) return 'Bu gün';
+  const y=new Date(today); y.setDate(y.getDate()-1);
+  if(d.toDateString()===y.toDateString()) return 'Dünən';
+  return d.toLocaleDateString('az');
+}
+function avatarColor(str){
+  const colors=['#5865f2','#57f287','#fee75c','#eb459e','#ed4245','#3ba55c','#faa61a','#9b59b6'];
+  let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))%colors.length;
+  return colors[Math.abs(h)%colors.length];
+}
+function initials(n){ return n.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?'; }
+
+// ===== AUTH =====
+function switchTab(t){
+  document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
+  document.getElementById('loginForm').style.display = t==='login'?'':'none';
+  document.getElementById('regForm').style.display   = t==='register'?'':'none';
+  document.getElementById('authErr').style.display   = 'none';
+}
+function showErr(m){ const e=document.getElementById('authErr'); e.textContent=m; e.style.display=m?'block':'none'; }
+
+async function doLogin(){
+  const u=document.getElementById('lUser').value.trim().toLowerCase();
+  const p=document.getElementById('lPass').value;
+  if(!u||!p) return showErr('Bütün sahələri doldurun.');
+  const {data,error}=await _sb.from('users').select('*').eq('username',u).single();
+  if(error||!data) return showErr('İstifadəçi tapılmadı.');
+  if(data.password!==p) return showErr('Parol yanlışdır.');
+  currentUser=data;
+  sessionStorage.setItem('caz_user',JSON.stringify(data));
+  startApp();
+}
+
+async function doRegister(){
+  const n=document.getElementById('rName').value.trim();
+  const u=document.getElementById('rUser').value.trim().toLowerCase();
+  const p=document.getElementById('rPass').value;
+  if(!n||!u||!p) return showErr('Bütün sahələri doldurun.');
+  if(p.length<6) return showErr('Parol ən az 6 simvol.');
+  if(!/^[a-z0-9_]+$/.test(u)) return showErr('Ad: hərf, rəqəm, _ olmalıdır.');
+  const {data:ex}=await _sb.from('users').select('username').eq('username',u).single();
+  if(ex) return showErr('Bu ad artıq mövcuddur.');
+  await _sb.from('users').insert({fullname:n,username:u,password:p});
+  showErr(''); alert('Qeydiyyat uğurludur! Daxil olun.'); switchTab('login');
+}
+
+function doLogout(){
+  sessionStorage.removeItem('caz_user');
+  currentUser=null; currentServer=null; currentChan=null;
+  document.getElementById('authWrap').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ===== APP START =====
+async function startApp(){
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('myAv').textContent   = initials(currentUser.fullname);
+  document.getElementById('myAv').style.background = avatarColor(currentUser.username);
+  document.getElementById('myName').textContent = currentUser.fullname;
+  document.getElementById('myTag').textContent  = '#'+currentUser.username;
+  await loadServers();
+}
+
+// ===== SERVERS =====
+async function loadServers(){
+  // Get servers user is member of
+  const {data:memberships}=await _sb.from('server_members').select('server_id').eq('user_id',currentUser.username);
+  if(!memberships||memberships.length===0){ renderServers([]); return; }
+  const ids=memberships.map(m=>m.server_id);
+  const {data:svrs}=await _sb.from('servers').select('*').in('id',ids).order('created_at');
+  renderServers(svrs||[]);
+}
+
+function renderServers(svrs){
+  servers=svrs;
+  const bar=document.getElementById('serverIcons');
+  bar.innerHTML='';
+  svrs.forEach(s=>{
+    const el=document.createElement('div');
+    el.className='server-icon';
+    el.id='si-'+s.id;
+    el.title=s.name;
+    el.style.background=avatarColor(s.name);
+    el.style.color='#fff';
+    el.style.fontWeight='700';
+    el.style.fontSize='16px';
+    el.textContent=initials(s.name);
+    el.onclick=()=>selectServer(s.id);
+    bar.appendChild(el);
+  });
+  if(svrs.length>0) selectServer(svrs[0].id);
+  else showEmptyState();
+}
+
+async function selectServer(id){
+  // Reset active icons
+  document.querySelectorAll('.server-icon').forEach(el=>el.classList.remove('active'));
+  if(id==='home'){
+    document.getElementById('serverIconHome').classList.add('active');
+    document.getElementById('serverName').textContent='ConnectAZ';
+    document.getElementById('chanList').innerHTML='';
+    showEmptyState(); return;
+  }
+  const el=document.getElementById('si-'+id);
+  if(el) el.classList.add('active');
+  currentServer=servers.find(s=>s.id===id);
+  if(!currentServer) return;
+  document.getElementById('serverName').textContent=currentServer.name;
+  await loadChannels();
+}
+
+// ===== CHANNELS =====
+async function loadChannels(){
+  const {data}=await _sb.from('channels').select('*').eq('server_id',currentServer.id).order('position');
+  channels=data||[];
+  renderChannels();
+  if(channels.length>0) await openChannel(channels[0]);
+  else showEmptyState();
+}
+
+function renderChannels(){
+  const list=document.getElementById('chanList');
+  list.innerHTML='';
+
+  // Text channels
+  const textChans=channels.filter(c=>c.type==='text');
+  const voiceChans=channels.filter(c=>c.type==='voice');
+
+  if(textChans.length>0||currentServer?.owner===currentUser.username){
+    const cat=document.createElement('div');
+    cat.className='chan-cat';
+    cat.innerHTML=`<span>Mətn Kanalları</span><button class="chan-cat-add" onclick="openCreateModal('text')" title="Kanal əlavə et">+</button>`;
+    list.appendChild(cat);
+    textChans.forEach(c=>list.appendChild(makeChanItem(c)));
+  }
+
+  if(voiceChans.length>0||currentServer?.owner===currentUser.username){
+    const cat=document.createElement('div');
+    cat.className='chan-cat';
+    cat.innerHTML=`<span>Səsli Kanallar</span><button class="chan-cat-add" onclick="openCreateModal('voice')" title="Kanal əlavə et">+</button>`;
+    list.appendChild(cat);
+    voiceChans.forEach(c=>list.appendChild(makeChanItem(c)));
+  }
+
+  if(channels.length===0){
+    const cat=document.createElement('div');
+    cat.className='chan-cat';
+    cat.innerHTML=`<span>Kanallar</span><button class="chan-cat-add" onclick="openCreateModal('text')">+</button>`;
+    list.appendChild(cat);
+    const info=document.createElement('div');
+    info.style.cssText='padding:12px 10px;font-size:13px;color:var(--text-muted);';
+    info.textContent='Hələ kanal yoxdur. + düyməsini sıxın.';
+    list.appendChild(info);
+  }
+}
+
+function makeChanItem(c){
+  const el=document.createElement('div');
+  el.className='chan-item'+(currentChan?.id===c.id?' active':'');
+  el.id='chan-'+c.id;
+  const icon=c.type==='voice'?'🔊':'#';
+  el.innerHTML=`
+    <span class="chan-icon">${icon}</span>
+    <span class="chan-name">${esc(c.name)}</span>
+    <span class="chan-badge" id="cbadge-${c.id}" style="display:none;"></span>
+    <div class="chan-actions">
+      <button class="chan-action-btn" onclick="event.stopPropagation();showQRForChan('${c.id}','${esc(c.name)}')" title="QR / Dəvət">📲</button>
+    </div>`;
+  el.onclick=()=>openChannel(c);
+  return el;
+}
+
+// ===== OPEN CHANNEL =====
+async function openChannel(c){
+  currentChan=c;
+  document.querySelectorAll('.chan-item').forEach(el=>el.classList.remove('active'));
+  const ci=document.getElementById('chan-'+c.id);
+  if(ci) ci.classList.add('active');
+
+  document.getElementById('emptyState').style.display='none';
+  const cv=document.getElementById('chatView');
+  cv.style.display='flex'; cv.style.flexDirection='column';
+
+  document.getElementById('chIcon').textContent = c.type==='voice'?'🔊':'#';
+  document.getElementById('chName').textContent = c.name;
+  document.getElementById('chTopic').textContent= c.topic||'';
+
+  await loadMessages();
+  await loadMembers();
+
+  // Subscribe realtime
+  if(msgSub) _sb.removeChannel(msgSub);
+  msgSub=_sb.channel('chan-'+c.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'channel_messages',filter:`channel_id=eq.${c.id}`},
+      payload=>appendMessage(payload.new))
+    .subscribe();
+}
+
+// ===== MESSAGES =====
+let lastDate='';
+let lastAuthor='';
+let lastMsgTime=0;
+
+async function loadMessages(){
+  const area=document.getElementById('messagesArea');
+  area.innerHTML='';
+  lastDate=''; lastAuthor=''; lastMsgTime=0;
+
+  const {data}=await _sb.from('channel_messages').select('*').eq('channel_id',currentChan.id).order('created_at',{ascending:true}).limit(200);
+  if(!data||data.length===0){
+    area.innerHTML=`<div class="chan-welcome">
+      <div class="chan-welcome-icon">#</div>
+      <h1>${esc(currentChan.name)} kanalına xoş gəldiniz!</h1>
+      <p>Bu, #${esc(currentChan.name)} kanalının başlanğıcıdır.</p>
+    </div>`;
+    return;
+  }
+  data.forEach(m=>appendMessage(m,false));
+  area.scrollTop=area.scrollHeight;
+}
+
+function appendMessage(m, scroll=true){
+  const area=document.getElementById('messagesArea');
+  const date=fmtDate(m.created_at);
+  if(date!==lastDate){
+    const sep=document.createElement('div');
+    sep.className='sys-msg'; sep.textContent=date;
+    area.appendChild(sep); lastDate=date;
+    lastAuthor=''; lastMsgTime=0;
+  }
+
+  const t=new Date(m.created_at).getTime();
+  const groupSame = m.author_name===lastAuthor && (t-lastMsgTime)<300000; // 5 min
+
+  if(groupSame){
+    const cont=document.createElement('div');
+    cont.className='msg-cont';
+    cont.innerHTML=esc(m.text);
+    area.appendChild(cont);
+  } else {
+    const g=document.createElement('div');
+    g.className='msg-group';
+    const col=avatarColor(m.author||'?');
+    g.innerHTML=`
+      <div class="msg-avatar" style="background:${col};">${initials(m.author_name||'?')}</div>
+      <div class="msg-body">
+        <div class="msg-header">
+          <span class="msg-author" style="color:${col};">${esc(m.author_name||m.author)}</span>
+          <span class="msg-time">${fmtTime(m.created_at)}</span>
+        </div>
+        <div class="msg-text">${esc(m.text)}</div>
+      </div>`;
+    area.appendChild(g);
+    lastAuthor=m.author_name; lastMsgTime=t;
+  }
+
+  if(scroll) area.scrollTop=area.scrollHeight;
+}
+
+async function sendMessage(){
+  const inp=document.getElementById('msgInput');
+  const text=inp.value.trim();
+  if(!text||!currentChan) return;
+  inp.value=''; inp.style.height='auto';
+  await _sb.from('channel_messages').insert({
+    channel_id:currentChan.id,
+    author:currentUser.username,
+    author_name:currentUser.fullname,
+    text
+  });
+}
+
+function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+
+function handleTyping(){
+  clearTimeout(typingTimer);
+  typingTimer=setTimeout(()=>{},2000);
+}
+
+function addEmoji(em){
+  const inp=document.getElementById('msgInput');
+  inp.value+=em; inp.focus();
+}
+
+// ===== MEMBERS =====
+async function loadMembers(){
+  const {data}=await _sb.from('server_members').select('*').eq('server_id',currentServer.id);
+  members=data||[];
+  renderMembers();
+}
+
+function renderMembers(){
+  const panel=document.getElementById('membersPanel');
+  panel.innerHTML='';
+  if(panel.classList.contains('hidden')) return;
+
+  const onlineCat=document.createElement('div');
+  onlineCat.className='mem-cat';
+  onlineCat.textContent=`Üzvlər — ${members.length}`;
+  panel.appendChild(onlineCat);
+
+  members.forEach(m=>{
+    const el=document.createElement('div');
+    el.className='mem-item';
+    const col=avatarColor(m.user_id);
+    el.innerHTML=`
+      <div class="mem-av" style="background:${col};">
+        ${initials(m.display_name||m.user_id)}
+        <div class="dot" style="background:var(--green);"></div>
+      </div>
+      <div>
+        <div class="mem-name">${esc(m.display_name||m.user_id)}</div>
+        <div class="mem-status">${m.user_id===currentServer.owner?'👑 Sahibi':''}</div>
+      </div>`;
+    panel.appendChild(el);
+  });
+}
+
+function toggleMembers(){
+  const p=document.getElementById('membersPanel');
+  p.classList.toggle('hidden');
+  renderMembers();
+}
+
+// ===== CREATE SERVER / CHANNEL =====
+function showAddServer(){
+  const name=prompt('Server adı:');
+  if(!name) return;
+  createServer(name.trim());
+}
+
+async function createServer(name){
+  if(!name) return;
+  const {data,error}=await _sb.from('servers').insert({name,owner:currentUser.username}).select().single();
+  if(error){ toast('Xəta baş verdi'); return; }
+  // Add owner as member
+  await _sb.from('server_members').insert({server_id:data.id,user_id:currentUser.username,display_name:currentUser.fullname});
+  // Create default channel
+  await _sb.from('channels').insert({server_id:data.id,name:'ümumi',type:'text',position:0});
+  toast('Server yaradıldı!');
+  await loadServers();
+  // Select new server
+  const {data:svrs}=await _sb.from('servers').select('*').eq('owner',currentUser.username).order('created_at',{ascending:false}).limit(1);
+  if(svrs&&svrs.length>0) selectServer(svrs[0].id);
+}
+
+function openCreateModal(defaultType='text'){
+  newChanType=defaultType;
+  selectChanType(defaultType);
+  document.getElementById('newChanName').value='';
+  document.getElementById('createModal').classList.add('open');
+}
+
+function selectChanType(t){
+  newChanType=t;
+  document.getElementById('typeText').classList.toggle('selected',t==='text');
+  document.getElementById('typeVoice').classList.toggle('selected',t==='voice');
+}
+
+async function createChannel(){
+  const name=document.getElementById('newChanName').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if(!name) return;
+  if(!currentServer) return;
+  const pos=channels.length;
+  await _sb.from('channels').insert({server_id:currentServer.id,name,type:newChanType,position:pos});
+  closeModal('createModal');
+  toast('Kanal yaradıldı!');
+  await loadChannels();
+}
+
+// ===== QR CODE =====
+function showQR(){
+  if(!currentChan) return;
+  showQRForChan(currentChan.id, currentChan.name);
+}
+
+function showQRForChan(chanId, chanName){
+  const link=`${window.location.origin}${window.location.pathname}?join=${currentServer?.id}&chan=${chanId}`;
+  document.getElementById('inviteLink').textContent=link;
+  document.getElementById('qrModalDesc').textContent=`#${chanName} kanalına dəvət üçün QR kodu paylaşın.`;
+  document.getElementById('qrCanvas').innerHTML='';
+  try{
+    new QRCode(document.getElementById('qrCanvas'),{
+      text:link, width:200, height:200,
+      colorDark:'#1a1d23', colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.M
+    });
+  }catch(e){ document.getElementById('qrCanvas').textContent=link; }
+  document.getElementById('qrModal').classList.add('open');
+}
+
+function copyInvite(){
+  const link=document.getElementById('inviteLink').textContent;
+  navigator.clipboard.writeText(link).then(()=>toast('Link kopyalandı! ✅'));
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// ===== INVITE LINK JOIN =====
+async function checkInviteLink(){
+  const params=new URLSearchParams(window.location.search);
+  const serverId=params.get('join');
+  const chanId=params.get('chan');
+  if(!serverId||!currentUser) return;
+  // Join server if not member
+  const {data:ex}=await _sb.from('server_members').select('*').eq('server_id',serverId).eq('user_id',currentUser.username).single();
+  if(!ex){
+    await _sb.from('server_members').insert({server_id:serverId,user_id:currentUser.username,display_name:currentUser.fullname});
+    toast('Serverə qoşuldunuz! 🎉');
+  }
+  await loadServers();
+  await selectServer(serverId);
+  if(chanId){
+    const c=channels.find(ch=>ch.id===chanId);
+    if(c) openChannel(c);
+  }
+  window.history.replaceState({},'',window.location.pathname);
+}
+
+function showEmptyState(){
+  document.getElementById('emptyState').style.display='flex';
+  document.getElementById('chatView').style.display='none';
+}
+
+// ===== INIT =====
+window.addEventListener('load', async ()=>{
+  const saved=sessionStorage.getItem('caz_user');
+  if(saved){
+    currentUser=JSON.parse(saved);
+    await startApp();
+    await checkInviteLink();
+  }
+  document.getElementById('lPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('rPass').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+
+  // Close modals on bg click
+  document.querySelectorAll('.modal-bg').forEach(el=>{
+    el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
+  });
+});
+</script>
+</body>
+</html>
